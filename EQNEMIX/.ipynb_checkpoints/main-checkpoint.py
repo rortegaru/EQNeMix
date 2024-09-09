@@ -8,16 +8,16 @@ import geopandas as gpd
 
 class eqnegrid:
    def __init__(self, fileextent='extent.shp', inputsrc=4326, outputcrs=3587, 
-                  filesp='Vsp.npy',files='vs.npy', filep='vp.npy', deltadist=1000, **kwargs):
+                  filesp='Vsp.npy',files='Vs.npy', filep='Vp.npy', deltadist=1000, **kwargs):
         """
-        Constructor to initialize the EQNEGRID class.
+        Constructor to initialize the EQNEMIX class.
 
         :param fileextent: Extension file, default is 'extent.shp'
         :param inputsrc: Input source, default is 4326
         :param outputcrs: Output coordinate reference system, default is 3587
         :param filesp: Numpy file, default is 'Vsp.npy'
-        :param filep: P file, default is ''vp.npy'
-        :param files: S file, default is 'vs.npy'
+        :param filep: P file, default is ''Vp.npy'
+        :param files: S file, default is 'Vs.npy'
         :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
         :param kwargs: Additional optional parameters.
         """
@@ -52,25 +52,15 @@ class eqnegrid:
         nx=self.nx, ny=self.ny, nz=self.nz,
         dx= self.dx, dy=self.dy, dz=self.dz,
         x_orig=self.x_orig, y_orig=self.y_orig, z_orig=self.z_orig
-
         )
-        self.gridp.orig_lat = 0.0  # Asigna un valor predeterminado adecuado
-        self.gridp.orig_lon = 0.0  # Asigna un valor predeterminado adecuado
-        self.gridp.map_rot = 0.0   # Asigna un valor predeterminado adecuado
-        self.gridp.proj_name = 'SIMPLE'  #
-
         self.gridp.init_array() 
         self.grids = NLLGrid(
         nx=self.nx, ny=self.ny, nz=self.nz,
         dx=self.dx, dy=self.dy, dz=self.dz,
         x_orig=self.x_orig, y_orig=self.y_orig, z_orig=self.z_orig
         )
-        self.grids.orig_lat = 0.0  # Asigna un valor predeterminado adecuado
-        self.grids.orig_lon = 0.0  # Asigna un valor predeterminado adecuado
-        self.grids.map_rot = 0.0   # Asigna un valor predeterminado adecuado
-        self.grids.proj_name = 'SIMPLE'  # Asegúrate de que esta proyección esté definida y sea válida
-
         self.grids.init_array()
+
 
         self.gridp.float_type = 'FLOAT'  
         self.gridp.type = 'VELOCITY'  
@@ -80,10 +70,6 @@ class eqnegrid:
         self.grids.type = 'VELOCITY'  
         self.grids.proj_name = 'SIMPLE'
         self.grids.basename = 'Vs_grid'
-        self.grids.map_rot=0
-        self.gridp.map_rot=0
-
-
 
    def print_variables(self):
         """
@@ -95,22 +81,10 @@ class eqnegrid:
    def print(*args, **kwargs):
          print_variables("EQNEMIX PARAMETERS:", *args, **kwargs)
    def savefiles(self,basefile):
-        """
-        Save al the files for next step
-
-       :param basefile: 'Prefix for hdr and buf'
-
-        
-        """
-        self.gridp.basename = basefile+'vp'
-        self.grids.basename = basefile+'vs'
-        self.gridp.write_hdr_file()
-        self.gridp.write_buf_file()
-        self.grids.write_hdr_file()
-        self.grids.write_buf_file()
-        new_velp = self.gridp.array
-        new_vels = self.grids.array
-        np.save(self.filep, new_velp)
-        np.save(self.files, new_vels)
- 
+       self.gridp.basename = basefile+'Vp_grid'
+       self.grids.basename = basefile+'Vs_grid'
+       self.gridp.write_hdr_file()
+       self.gridp.write_buf_file()
+       self.grids.write_hdr_file()
+       self.grids.write_buf_file()
  
