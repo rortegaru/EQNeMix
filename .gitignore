@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# Entornos virtuales
+venv/
+.env/
+
+# Archivos de configuración específicos
+*.log
+*.sqlite3
+
+# Archivos de Sphinx
+docs/_build/
