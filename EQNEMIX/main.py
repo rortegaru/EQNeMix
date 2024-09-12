@@ -1,5 +1,5 @@
-# Main module for EQNEMIX
-# EQNEMIX/main.py
+# Main module for eqnemix
+# eqnemix/main.py
 import numpy as np
 import matplotlib.pyplot as plt
 from nllgrid import NLLGrid
@@ -73,7 +73,7 @@ class eqnegrid:
         self.grids.orig_lat = 0.0  # Asigna un valor predeterminado adecuado
         self.grids.orig_lon = 0.0  # Asigna un valor predeterminado adecuado
         self.grids.map_rot = 0.0   # Asigna un valor predeterminado adecuado
-        self.grids.proj_name = 'SIMPLE'  # Asegúrate de que esta proyección esté definida y sea válida
+        self.grids.proj_name = 'SIMPLE'  # Aseg??rate de que esta proyecci??n est?? definida y sea v??lida
         self.grids.init_array()
         self.gridp.float_type = 'FLOAT'  
         self.gridp.type = 'VELOCITY'  
@@ -153,7 +153,7 @@ class eqnefmm:
 
         print("Loaded variables:")
         for key in datos.keys():
-            print(f"{key} = {getattr(self, key)}")  # Confirma que las variables están asignadas
+            print(f"{key} = {getattr(self, key)}")  # Confirma que las variables est??n asignadas
 
 # 
     def mostrar_atributos(self):
@@ -219,5 +219,5 @@ class eqnefmm:
         
         :param basefile: Prefix for saving files.
         """
-        # Llama al método savefiles de eqnegrid con un prefijo personalizado
+        # Llama al m??todo savefiles de eqnegrid con un prefijo personalizado
         self.eqnegrid.savefiles(basefile)

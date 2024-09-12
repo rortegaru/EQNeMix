@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: eqnemix
+Version: 2.0.1
+Summary: A package for seismic probabilistc location using Gaussian Mixture Models 
+Home-page: https://github.com/rortegaru/eqnemix
+Author: Roberto Ortega
+Author-email: ortega@cicese.mx
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: nllgrid
+Requires-Dist: seisbench
+Requires-Dist: pymc
+Requires-Dist: obspy

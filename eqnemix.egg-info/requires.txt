@@ -1,0 +1,6 @@
+numpy
+pandas
+nllgrid
+seisbench
+pymc
+obspy

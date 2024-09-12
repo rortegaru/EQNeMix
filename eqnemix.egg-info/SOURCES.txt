@@ -1,0 +1,17 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+eqnemix/__init__.py
+eqnemix/main.py
+eqnemix.egg-info/PKG-INFO
+eqnemix.egg-info/SOURCES.txt
+eqnemix.egg-info/dependency_links.txt
+eqnemix.egg-info/entry_points.txt
+eqnemix.egg-info/requires.txt
+eqnemix.egg-info/top_level.txt
+tests/test_main.py
+utils/__init__.py
+utils/helper.py

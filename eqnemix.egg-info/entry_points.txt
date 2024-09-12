@@ -1,0 +1,2 @@
+[console_scripts]
+eqnmix = eqnemix.main:main_function
