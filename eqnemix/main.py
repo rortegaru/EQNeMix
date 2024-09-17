@@ -137,13 +137,15 @@ class eqnegrid:
  
 
 class eqnefmm:
-    def __init__(self, velp='vp.npy',vels='vs.npy', stax, stay, fileextent='extent.shp', inputsrc=4326, outputcrs=3587,deltadist=1000):
+    def __init__(self,  stax, stay, velp='vp.npy',vels='vs.npy',fileextent='extent.shp', inputsrc=4326, outputcrs=3587,deltadist=1000):
         """
         Constructor to initialize the eqnefmm
 
         :param eqnegrid: Instance of grid previously created
         velp numpy array with P velocities
         vels numpy array with S velocities
+        stax longitud of station, expected in EPSG:4326
+        stay latitud of station, expected in EPSG:4326
 
         """
         self.deltadist = deltadist
@@ -169,7 +171,6 @@ class eqnefmm:
         self.vss = vels.reshape([self.nx*self.ny*self.nz,1],order='F').astype('float32')
 
 
-        #decidiendo si se utilizan valores de otra clase o si duplico variables
         self.inputsrc = pyproj.CRS(f"EPSG:{inputsrc}")
         self.outputcrs = pyproj.CRS(f"EPSG:{outputcrs}")
 
@@ -186,7 +187,11 @@ class eqnefmm:
         self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
         self.ts = fmm.eikonal(self.vss, xyz=np.array([self.stay_pro, self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
 
-        
+        ttp = self.tp.reshape(255,255,255,order='F')
+        tts = self.ts.reshape(255,255,255,order='F')
+        self.tsp = tts - ttp
+
+
         
 
 
@@ -204,6 +209,95 @@ class eqnefmm:
             print(f"{key} = {getattr(self, key)}")  # Confirma que las variables est??n asignadas
 
 # 
+
+    def countour_graph(self):
+
+        tn = self.tsp[:,:,1]
+        tn = tn.reshape(self.nx, self.ny)
+
+        # Plot contour times plot
+        fig = plt.figure(figsize=(10, 6))
+        ax = fig.add_subplot(111,aspect=1.0)
+        plt.contour(tn, levels=np.linspace(tn.min(), tn.max(), 10))
+        plt.scatter(self.stax_pro,self.stay_pro,s=100,marker='^',color='black', label='CI.CLC')
+        plt.xlabel('Delta index in X (longitude)')
+        plt.ylabel('Delta index in Y (latitude)')
+        plt.title('Contour plot of tn')
+
+        # Show the plot
+        plt.show()
+
+
+    def full_graph(self):
+        #Modified from Yangkang Chen, 2022. The University of Texas at Austin.
+
+        # Define matrix dimensions
+        Nx, Ny, Nz = self.nx, self.ny, self.nz
+        X, Y, Z = np.meshgrid(np.arange(Nx)*.5, np.arange(Ny)*.5, np.arange(Nz)*.5)
+
+        # Specify the 3D data
+        data = self.tsp
+        kw = {
+            'vmin': data.min(),
+            'vmax': data.max(),
+            'alpha': 0.9,
+            'levels': np.linspace(data.min(), data.max(), 20),
+        }
+
+        # Create a figure with 3D axes
+        fig = plt.figure(figsize=(18, 9))
+        # plt.subplot(1,2,1)
+        plt.plasma()
+        ax = fig.add_subplot(121, projection='3d')
+
+        # Plot contour surfaces
+        _ = ax.contourf(X[:, :, -1], Y[:, :, -1], data[:, :, 0], zdir='z', offset=0, **kw)
+        _ = ax.contourf(X[0, :, :], data[0, :, :], Z[0, :, :], zdir='y', offset=0, **kw)
+        C = ax.contourf(data[:, -1, :], Y[:, -1, :], Z[:, -1, :], zdir='x', offset=X.max(), **kw)
+
+        # Set limits of the plot from coordinates limits
+        xmin, xmax = X.min(), X.max()
+        ymin, ymax = Y.min(), Y.max()
+        zmin, zmax = Z.min(), Z.max()
+        ax.set(xlim=[xmin, xmax], ylim=[ymin, ymax], zlim=[zmin, zmax])
+
+        #Plot edges
+        edges_kw = dict(color='0.4', linewidth=1, zorder=1e3)
+        ax.plot([xmax, xmax], [ymin, ymax], 0, **edges_kw)
+        ax.plot([xmin, xmax], [ymin, ymin], 0, **edges_kw)
+        ax.plot([xmax, xmax], [ymin, ymin], [zmin, zmax], **edges_kw)
+
+        # Set labels and zticks
+        #ax.set(xlabel='X: Longitude [km]', ylabel='Y: Latitude [km]', zlabel='Z: Depth [km]')
+        ax.set_xlabel('X: Longitude [km]')
+        ax.set_ylabel('Y: Latitude [km]')
+        ax.set_zlabel('Z: Depth [km]')
+
+        # Set zoom and angle view
+        # ax.view_init(40, -30, 0)
+        # ax.set_box_aspect(None, zoom=0.9)         stax_pro,stay_pro
+
+        #plt.gca().scatter(stax_pro, stay_pro, 0, s=100, marker='^', color='black', label='CI.CLC') #(x, y, z)
+        plt.gca().set_xlim(0,131);
+        plt.gca().set_ylim(0,131);
+        plt.gca().set_zlim(0,131)
+        plt.title('3D Travel Time S-P', color='k', fontsize=20)
+        plt.gca().invert_zaxis()
+
+        # Position for the colorbar
+        #cb = plt.colorbar(C, cax = fig.add_axes([0.15,0.1,0.3,0.02]), format= "%4.2f", orientation='horizontal',label='Traveltime S-P [s]')
+        cb = plt.colorbar(C, cax=fig.add_axes([0.10, 0.09, 0.25, 0.02]), format="%4.2f", orientation='horizontal', label='Traveltime S-P [s]')
+        cb.ax.tick_params(labelrotation=45)
+        # Save image plot
+        plt.savefig('test_pyekfmm_fig2.png',format='png',dpi=300,bbox_inches='tight', pad_inches=0.3)
+        plt.savefig('test_pyekfmm_fig2.pdf', format='pdf', dpi=350, bbox_inches='tight', pad_inches=0.1)
+
+
+        # Show Figure
+        plt.show()
+
+
+
     def mostrar_atributos(self):
         # Listar los atributos actuales de la clase
         print("Atributos actuales de la clase:")
