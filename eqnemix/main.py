@@ -49,9 +49,9 @@ class eqnegrid:
         self.elements_y = int(self.length_y // self.deltadist)
         self.max_elements = max(self.elements_x, self.elements_y)
         #print(f"Elements in x: {elements_x}, Elements in y: {elements_y}")
-        self.nx = 255
-        self.ny = 255
-        self.nz = 255
+        self.nx = self.max_elements
+        self.ny = self.max_elements
+        self.nz = self.max_elements
         
         self.dx, self.dy, self.dz = self.deltadist, self.deltadist,self.deltadist  
         self.x_orig=self.minx
@@ -146,18 +146,28 @@ class eqnefmm:
         vels numpy array with S velocities
 
         """
-        self.nx = 255
-        self.ny = 255
-        self.nz = 255
-        #reshape and convert
-        self.vpp = velp.reshape([self.nx*self.ny*self.nz,1], order='F').astype('float32')
-        self.vss = vels.reshape([self.nx*self.ny*self.nz,1],order='F').astype('float32')
-
+        self.deltadist = deltadist
+        
         #Dimensiones del poligono
         gdf = gpd.read_file(fileextent)
         gdf = gdf.to_crs(epsg=self.outputcrs)
         polygon = gdf.geometry.iloc[0]
         self.minx, self.miny, self.maxx, self.maxy = polygon.bounds
+
+        self.length_x = self.maxx - self.minx
+        self.length_y = self.maxy - self.miny
+        self.elements_x = int(self.length_x // self.deltadist)
+        self.elements_y = int(self.length_y // self.deltadist)
+        self.max_elements = max(self.elements_x, self.elements_y)
+        #print(f"Elements in x: {elements_x}, Elements in y: {elements_y}")
+        self.nx = self.max_elements
+        self.ny = self.max_elements
+        self.nz = self.max_elements
+
+        #reshape and convert
+        self.vpp = velp.reshape([self.nx*self.ny*self.nz,1], order='F').astype('float32')
+        self.vss = vels.reshape([self.nx*self.ny*self.nz,1],order='F').astype('float32')
+
 
         #decidiendo si se utilizan valores de otra clase o si duplico variables
         self.inputsrc = pyproj.CRS(f"EPSG:{inputsrc}")
@@ -175,6 +185,8 @@ class eqnefmm:
         #realizar el fmm
         self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
         self.ts = fmm.eikonal(self.vss, xyz=np.array([self.stay_pro, self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
+
+        
         
 
 
