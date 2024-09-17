@@ -10,6 +10,10 @@ import json
 import pyproj
 import pymc
 
+import pyekfmm as fmm
+import pyproj
+
+
 
 class eqnegrid:
    def __init__(self, fileextent='extent.shp', inputsrc=4326, outputcrs=3587, 
@@ -133,15 +137,23 @@ class eqnegrid:
  
 
 class eqnefmm:
-    def __init__(self, **kwargs):
+    def __init__(self, vpfile='vp.npy',vsfile='vs.npy',stax, stay):
         """
         Constructor to initialize the eqnefmm
 
         :param eqnegrid: Instance of grid previously created
 
         """
+        #reshape and convert
+        velp = np.load(vpfile)
+        vels = np.load(vsfile)
+        self.vpp = velp.reshape([255*255*255,1], order='F').astype('float32')
+        self.vss = vels.reshape([255*255*255,1],order='F').astype('float32')
 
-    
+        #decidiendo si se utilizan valores de otra clase o si duplico variables
+
+
+
      # Lee los datos desde un archivo JSON
         with open('varsgrid.json', 'r') as file:
             datos = json.load(file)
