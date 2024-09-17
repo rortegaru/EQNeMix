@@ -137,21 +137,45 @@ class eqnegrid:
  
 
 class eqnefmm:
-    def __init__(self, vpfile='vp.npy',vsfile='vs.npy',stax, stay):
+    def __init__(self, velp='vp.npy',vels='vs.npy', stax, stay, fileextent='extent.shp', inputsrc=4326, outputcrs=3587,deltadist=1000):
         """
         Constructor to initialize the eqnefmm
 
         :param eqnegrid: Instance of grid previously created
+        velp numpy array with P velocities
+        vels numpy array with S velocities
 
         """
+        self.nx = 255
+        self.ny = 255
+        self.nz = 255
         #reshape and convert
-        velp = np.load(vpfile)
-        vels = np.load(vsfile)
-        self.vpp = velp.reshape([255*255*255,1], order='F').astype('float32')
-        self.vss = vels.reshape([255*255*255,1],order='F').astype('float32')
+        self.vpp = velp.reshape([self.nx*self.ny*self.nz,1], order='F').astype('float32')
+        self.vss = vels.reshape([self.nx*self.ny*self.nz,1],order='F').astype('float32')
+
+        #Dimensiones del poligono
+        gdf = gpd.read_file(fileextent)
+        gdf = gdf.to_crs(epsg=self.outputcrs)
+        polygon = gdf.geometry.iloc[0]
+        self.minx, self.miny, self.maxx, self.maxy = polygon.bounds
 
         #decidiendo si se utilizan valores de otra clase o si duplico variables
+        self.inputsrc = pyproj.CRS(f"EPSG:{inputsrc}")
+        self.outputcrs = pyproj.CRS(f"EPSG:{outputcrs}")
 
+        transformer = pyproj.Transformer.from_crs(self.inputsrc, self.outputcrs, always_xy=True)
+        # Transform the latitude and longitude station (CI.CLC) coodinates
+        stax_pro, stay_pro = transformer.transform(stax, stay)
+
+        stax_pro = stax_pro[0] - self.minx
+        stay_pro = stay_pro[0] - self.miny
+        self.stax_pro = int(stax_pro/deltadist)
+        self.stay_pro = int(stay_pro/deltadist)
+
+        #realizar el fmm
+        self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
+        self.ts = fmm.eikonal(self.vss, xyz=np.array([self.stay_pro, self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
+        
 
 
      # Lee los datos desde un archivo JSON
