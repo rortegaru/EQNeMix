@@ -363,3 +363,65 @@ class eqnefmm:
         """
         # Llama al m??todo savefiles de eqnegrid con un prefijo personalizado
         self.eqnegrid.savefiles(basefile)
+
+
+class eqne:
+    def __init__(self,station_lon, station_lat, deltadist=1000):
+        """
+        
+        :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
+        """
+        self.stalon = station_lon
+        self.stalat = station_lat
+        self.deltadist = deltadist
+
+    def xminyminshape(file,inputcrs=4326,outputcrs=3587):
+        """
+        :param fileextent: Geographical Extension file, like 'extent.shp'        
+        :param inputsrc: Input source, default is 4326
+        :param outputcrs: Output coordinate reference system, default is 3587
+        """
+        
+        self.inputcrs = inputcrs
+        self.outputcrs = outputcrs
+
+        gdf = gpd.read_file(file) #Leer el archivo
+
+        if gdf.crs == self.inputcrs:
+            #print("The file matches the indicted epsg")
+        else:
+            print("The file is not in the indicated epsg")
+
+        # Verificar si la proyección es geográfica y convertir si es necesario
+        if gdf.crs.is_geographic:
+            gdf = gdf.to_crs(epsg=self.outputcrs )
+        else:
+            print("El shapefile ya está en una proyección proyectada.")
+
+
+        polygon = gdf.geometry.iloc[0]
+        minx, miny, maxx, maxy = polygon.bounds
+
+        # Guardar los valores de la esquina inferior izquierda del poligono
+        self.minx = minx
+        self.miny = miny
+        # Calcular el tamaño del rectángulo en metros
+        length_x = maxx - minx
+        length_y = maxy - miny
+
+        # Calcular el número de elementos en x y en y
+        elements_x = int(length_x // self.deltadist)
+        elements_y = int(length_y // self.deltadist)
+
+        # Definir las dimensiones con las que se va a trabajar
+        self.max_elements = max(elements_x, elements_y)
+        self.nx = self.max_elements
+        self.ny = self.max_elements
+        self.nz = self.max_elements
+
+        return self.minx, self.miny, self.max_elements
+    
+
+
+
+
