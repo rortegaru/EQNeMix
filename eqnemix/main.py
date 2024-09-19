@@ -422,6 +422,46 @@ class eqne:
         return self.minx, self.miny, self.max_elements
     
 
+    def nllgrid(vp_values,vs_values,layer_thickness):
+        if len(layer_thickness) != len(vp_values):
+            raise ValueError("La longitud de layer_thickness debe coincidir con la de vp_values")
+        if len(layer_thickness) != len(vs_values):
+            raise ValueError("La longitud de layer_thickness debe coincidir con la de vs_values")
 
+        # P velocity array  
+        gridp = NLLGrid(
+            nx=self.nx, ny=self.ny, nz=self.nz,
+            dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
+            x_orig=0, y_orig=0, z_orig=0
+        )
+        gridp.init_array()
+       
+        z_start = 0
+        for i, vs in enumerate(vp_values):
+            z_end = z_start + layer_thickness[i]
+            gridp.array[:, :, z_start:z_end] = vs
+            z_start = z_end  # Actualizar z_start para la siguiente capa
+        if z_end < nz:
+            gridp.array[:, :, z_end:] = vp_values[-1]
 
+        # S velocity array
+        grids = NLLGrid(
+            nx=self.nx, ny=self.ny, nz=self.nz,
+            dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
+            x_orig=0, y_orig=0, z_orig=0
+        )  
+        grids.init_array()  # Inicializa el array tridimensional con ceros
+
+        z_start = 0
+        for i, vs in enumerate(vs_values):
+            z_end = z_start + layer_thickness[i]
+            grids.array[:, :, z_start:z_end] = vs
+            z_start = z_end  # Actualizar z_start para la siguiente capa
+        if z_end < nz:
+            grids.array[:, :, z_end:] = vs_values[-1]
+
+        self.gridp = gridp
+        self.grids = grids
+        
+        return gridp, grids
 
