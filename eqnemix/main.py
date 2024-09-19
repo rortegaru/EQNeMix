@@ -180,8 +180,8 @@ class eqnefmm:
 
         stax_pro = stax_pro[0] - self.minx
         stay_pro = stay_pro[0] - self.miny
-        self.stax_pro = int(stax_pro/deltadist)
-        self.stay_pro = int(stay_pro/deltadist)
+        self.stax_pro = int(stax_pro/1000)
+        self.stay_pro = int(stay_pro/1000)
 
         #realizar el fmm
         self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
@@ -375,7 +375,9 @@ class eqne:
         self.stalat = station_lat
         self.deltadist = deltadist
 
-    def xminyminshape(file,inputcrs=4326,outputcrs=3587):
+
+
+    def xminyminshape(self,file,inputcrs=4326,outputcrs=3587):
         """
         :param fileextent: Geographical Extension file, like 'extent.shp'        
         :param inputsrc: Input source, default is 4326
@@ -422,7 +424,7 @@ class eqne:
         return self.minx, self.miny, self.max_elements
     
 
-    def nllgrid(vp_values,vs_values,layer_thickness):
+    def nllgrid(self,vp_values,vs_values,layer_thickness):
         if len(layer_thickness) != len(vp_values):
             raise ValueError("La longitud de layer_thickness debe coincidir con la de vp_values")
         if len(layer_thickness) != len(vs_values):
@@ -441,7 +443,7 @@ class eqne:
             z_end = z_start + layer_thickness[i]
             gridp.array[:, :, z_start:z_end] = vs
             z_start = z_end  # Actualizar z_start para la siguiente capa
-        if z_end < nz:
+        if z_end < self.nz:
             gridp.array[:, :, z_end:] = vp_values[-1]
 
         # S velocity array
@@ -457,11 +459,46 @@ class eqne:
             z_end = z_start + layer_thickness[i]
             grids.array[:, :, z_start:z_end] = vs
             z_start = z_end  # Actualizar z_start para la siguiente capa
-        if z_end < nz:
+        if z_end < self.nz:
             grids.array[:, :, z_end:] = vs_values[-1]
 
-        self.gridp = gridp
-        self.grids = grids
+        self.gridp = gridp.array
+        self.grids = grids.array
         
         return gridp, grids
+    
+    def eqnefmm(self):
 
+        #reshape arrays
+
+        self.vpp = self.gridp.reshape([255*255*255,1], order='F').astype('float32')
+        self.vss = self.grids.reshape([255*255*255,1], order='F').astype('float32')
+
+        #change the station coordinate points
+
+        input_crs = pyproj.CRS(f"EPSG:{self.inputcrs}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
+
+        # Define the output coordinates system (latitude and longitude)
+        output_crs = pyproj.CRS(f"EPSG:{self.outputcrs}")
+        # Create a coordinates transformer
+        transformer = pyproj.Transformer.from_crs(input_crs, output_crs, always_xy=True)
+
+        # Transform the latitude and longitude station (CI.CLC) coodinates
+        stax_pro, stay_pro = transformer.transform(self.stalon, self.stalat)
+
+
+        stax_pro = stax_pro[0] - self.minx
+        stay_pro = stay_pro[0] - self.miny
+        # Transformamos de metros a kilometros
+        self.stax_pro = int(stax_pro/1000) 
+        self.stay_pro = int(stay_pro/1000)
+
+        #realizar el fmm
+        self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
+        self.ts = fmm.eikonal(self.vss, xyz=np.array([self.stay_pro, self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
+
+        ttp = self.tp.reshape(self.nx,self.ny,self.nz,order='F')
+        tts = self.ts.reshape(self.nx,self.ny,self.nz,order='F')
+        self.tsp = tts - ttp
+        
+        return self.tsp
