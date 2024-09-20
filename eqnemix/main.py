@@ -423,6 +423,36 @@ class eqne:
 
         return self.minx, self.miny, self.max_elements
     
+    def xminymin(self,xmin,ymin,xmax,ymax,inputcrs=4326,outputcrs=3587):
+
+        # Verificar si la proyección es geográfica y convertir si es necesario
+        input_crs = pyproj.CRS(f"EPSG:{self.inputcrs}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
+
+        # Define the output coordinates system (latitude and longitude)
+        output_crs = pyproj.CRS(f"EPSG:{self.outputcrs}")
+        # Create a coordinates transformer
+        transformer = pyproj.Transformer.from_crs(input_crs, output_crs, always_xy=True)
+
+        # Transform the latitude and longitude coodinates
+        self.minx, self.miny = transformer.transform(xmin, ymin)
+        self.maxx, self.maxy = transformer.transform(xmax, ymax)
+
+        # Calcular el tamaño del rectángulo en metros
+        length_x = self.maxx - self.minx
+        length_y = self.maxy - self.miny
+
+        # Calcular el número de elementos en x y en y
+        elements_x = int(length_x // self.deltadist)
+        elements_y = int(length_y // self.deltadist)
+
+        # Definir las dimensiones con las que se va a trabajar
+        self.max_elements = max(elements_x, elements_y)
+        self.nx = self.max_elements
+        self.ny = self.max_elements
+        self.nz = self.max_elements
+
+        return self.minx, self.miny, self.max_elements
+    
 
     def nllgrid(self,vp_values,vs_values,layer_thickness):
         if len(layer_thickness) != len(vp_values):
@@ -502,3 +532,4 @@ class eqne:
         self.tsp = tts - ttp
         
         return self.tsp
+    
