@@ -365,38 +365,35 @@ class eqnefmm:
         self.eqnegrid.savefiles(basefile)
 
 
-class eqne:
-    def __init__(self,station_lon, station_lat, deltadist=1000):
+class eqnemaster:
+    def __init__(self,station_lon, station_lat, EPSG=4326 ,deltadist=1000):
         """
         
         :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
         """
         self.stalon = station_lon
         self.stalat = station_lat
+        self.stacrs = EPSG
         self.deltadist = deltadist
 
 
 
-    def xminyminshape(self,file,inputcrs=4326,outputcrs=3587):
+    def xminyminshape(self,file,inputcrs=4326,outputcrs=3857):
         """
         :param fileextent: Geographical Extension file, like 'extent.shp'        
         :param inputsrc: Input source, default is 4326
-        :param outputcrs: Output coordinate reference system, default is 3587
+        :param outputcrs: Output coordinate reference system, default is 3857
         """
         
-        self.inputcrs = inputcrs
-        self.outputcrs = outputcrs
+        self.inputcrsshape = inputcrs
+        self.outputcrsshape = outputcrs
 
         gdf = gpd.read_file(file) #Leer el archivo
-
-        if gdf.crs == self.inputcrs:
-            #print("The file matches the indicted epsg")
-        else:
-            print("The file is not in the indicated epsg")
+        gdf = gdf.set_crs(f"EPSG:{self.inputcrsshape}")
 
         # Verificar si la proyección es geográfica y convertir si es necesario
         if gdf.crs.is_geographic:
-            gdf = gdf.to_crs(epsg=self.outputcrs )
+            gdf = gdf.to_crs(epsg=self.outputcrsshape )
         else:
             print("El shapefile ya está en una proyección proyectada.")
 
@@ -423,18 +420,20 @@ class eqne:
 
         return self.minx, self.miny, self.max_elements
     
-    def xminymin(self,xmin,ymin,xmax,ymax,inputcrs=4326,outputcrs=3587):
-
+    def xminymin(self,xmin,ymin,xmax,ymax,inputcrs=4326,outputcrs=3857):
+        self.inputcrsshape = inputcrs
+        self.outputcrsshape = outputcrs
         # Verificar si la proyección es geográfica y convertir si es necesario
-        input_crs = pyproj.CRS(f"EPSG:{self.inputcrs}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
+        input_crs = pyproj.CRS(f"EPSG:{self.inputcrsshape}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
 
         # Define the output coordinates system (latitude and longitude)
-        output_crs = pyproj.CRS(f"EPSG:{self.outputcrs}")
+        output_crs = pyproj.CRS(f"EPSG:{self.outputcrsshape}")
         # Create a coordinates transformer
-        transformer = pyproj.Transformer.from_crs(input_crs, output_crs, always_xy=True)
+        transformer = pyproj.Transformer.from_crs(input_crs, output_crs, always_xy=True, accuracy=1e-9)
 
         # Transform the latitude and longitude coodinates
         self.minx, self.miny = transformer.transform(xmin, ymin)
+
         self.maxx, self.maxy = transformer.transform(xmax, ymax)
 
         # Calcular el tamaño del rectángulo en metros
@@ -506,10 +505,10 @@ class eqne:
 
         #change the station coordinate points
 
-        input_crs = pyproj.CRS(f"EPSG:{self.inputcrs}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
+        input_crs = pyproj.CRS(f"EPSG:{self.stacrs}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
 
         # Define the output coordinates system (latitude and longitude)
-        output_crs = pyproj.CRS(f"EPSG:{self.outputcrs}")
+        output_crs = pyproj.CRS(f"EPSG:{self.outputcrsshape}")
         # Create a coordinates transformer
         transformer = pyproj.Transformer.from_crs(input_crs, output_crs, always_xy=True)
 
@@ -517,8 +516,8 @@ class eqne:
         stax_pro, stay_pro = transformer.transform(self.stalon, self.stalat)
 
 
-        stax_pro = stax_pro[0] - self.minx
-        stay_pro = stay_pro[0] - self.miny
+        stax_pro = stax_pro - self.minx
+        stay_pro = stay_pro - self.miny
         # Transformamos de metros a kilometros
         self.stax_pro = int(stax_pro/1000) 
         self.stay_pro = int(stay_pro/1000)
