@@ -368,7 +368,8 @@ class eqnefmm:
 class eqnemaster:
     def __init__(self,station_lon, station_lat, EPSG=4326 ,deltadist=1000):
         """
-        
+        :param station_lon: Longitud of the station to work with
+        :param station_lat: Latitud of the station to work with
         :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
         """
         self.stalon = station_lon
@@ -388,31 +389,31 @@ class eqnemaster:
         self.inputcrsshape = inputcrs
         self.outputcrsshape = outputcrs
 
-        gdf = gpd.read_file(file) #Leer el archivo
+        gdf = gpd.read_file(file) #Read the file
         gdf = gdf.set_crs(f"EPSG:{self.inputcrsshape}")
 
-        # Verificar si la proyección es geográfica y convertir si es necesario
+        # Verify the projection and change it if necessary
         if gdf.crs.is_geographic:
             gdf = gdf.to_crs(epsg=self.outputcrsshape )
         else:
-            print("El shapefile ya está en una proyección proyectada.")
+            print("The shapefile is already projected")
 
-
+        # Get the coordinates of the bounds of the polygon
         polygon = gdf.geometry.iloc[0]
         minx, miny, maxx, maxy = polygon.bounds
 
-        # Guardar los valores de la esquina inferior izquierda del poligono
+        # Safe the coordiantes of the bottom left cornder
         self.minx = minx
         self.miny = miny
-        # Calcular el tamaño del rectángulo en metros
+        # Get the horizontal and vertical length fo the area
         length_x = maxx - minx
         length_y = maxy - miny
 
-        # Calcular el número de elementos en x y en y
+        # Calculate the number of elements along the x and y axis
         elements_x = int(length_x // self.deltadist)
         elements_y = int(length_y // self.deltadist)
 
-        # Definir las dimensiones con las que se va a trabajar
+        # Define the working dimentions (keeping in mind that we need to work with a cube)
         self.max_elements = max(elements_x, elements_y)
         self.nx = self.max_elements
         self.ny = self.max_elements
@@ -423,9 +424,8 @@ class eqnemaster:
     def xminymin(self,xmin,ymin,xmax,ymax,inputcrs=4326,outputcrs=3857):
         self.inputcrsshape = inputcrs
         self.outputcrsshape = outputcrs
-        # Verificar si la proyección es geográfica y convertir si es necesario
+        # Define the input coordinates system (latitude and longitude)
         input_crs = pyproj.CRS(f"EPSG:{self.inputcrsshape}")  # EPSG:4326 represents WGS 84 (latitude and longitude)
-
         # Define the output coordinates system (latitude and longitude)
         output_crs = pyproj.CRS(f"EPSG:{self.outputcrsshape}")
         # Create a coordinates transformer
@@ -436,15 +436,15 @@ class eqnemaster:
 
         self.maxx, self.maxy = transformer.transform(xmax, ymax)
 
-        # Calcular el tamaño del rectángulo en metros
+        # Calculate the size of the rectangle in meters
         length_x = self.maxx - self.minx
         length_y = self.maxy - self.miny
 
-        # Calcular el número de elementos en x y en y
+        # Calculate the number of elements along the x and y axis
         elements_x = int(length_x // self.deltadist)
         elements_y = int(length_y // self.deltadist)
 
-        # Definir las dimensiones con las que se va a trabajar
+        # Define the working dimentions (keeping in mind that we need to work with a cube)
         self.max_elements = max(elements_x, elements_y)
         self.nx = self.max_elements
         self.ny = self.max_elements
@@ -455,9 +455,9 @@ class eqnemaster:
 
     def nllgrid(self,vp_values,vs_values,layer_thickness):
         if len(layer_thickness) != len(vp_values):
-            raise ValueError("La longitud de layer_thickness debe coincidir con la de vp_values")
+            raise ValueError("The size of layer_thickness must be the same as the size of vp_values")
         if len(layer_thickness) != len(vs_values):
-            raise ValueError("La longitud de layer_thickness debe coincidir con la de vs_values")
+            raise ValueError("The size of layer_thickness must be the same as the size of vs_values")
 
         # P velocity array  
         gridp = NLLGrid(
@@ -465,13 +465,14 @@ class eqnemaster:
             dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
             x_orig=0, y_orig=0, z_orig=0
         )
-        gridp.init_array()
+        gridp.init_array() I#nicialize the tridimentional array with zeros
        
         z_start = 0
+        # Assign the velocities to the corresponding position in the array
         for i, vs in enumerate(vp_values):
             z_end = z_start + layer_thickness[i]
             gridp.array[:, :, z_start:z_end] = vs
-            z_start = z_end  # Actualizar z_start para la siguiente capa
+            z_start = z_end  # Change the z_atart for the next layer
         if z_end < self.nz:
             gridp.array[:, :, z_end:] = vp_values[-1]
 
@@ -481,13 +482,14 @@ class eqnemaster:
             dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
             x_orig=0, y_orig=0, z_orig=0
         )  
-        grids.init_array()  # Inicializa el array tridimensional con ceros
+        grids.init_array()  # Inicialize the tridimentional array with zeros
 
+        # Assign the velocities to the corresponding position in the array
         z_start = 0
         for i, vs in enumerate(vs_values):
             z_end = z_start + layer_thickness[i]
             grids.array[:, :, z_start:z_end] = vs
-            z_start = z_end  # Actualizar z_start para la siguiente capa
+            z_start = z_end  # Change the z_atart for the next layer
         if z_end < self.nz:
             grids.array[:, :, z_end:] = vs_values[-1]
 
@@ -518,11 +520,11 @@ class eqnemaster:
 
         stax_pro = stax_pro - self.minx
         stay_pro = stay_pro - self.miny
-        # Transformamos de metros a kilometros
+        # Switch metrers for kilometros
         self.stax_pro = int(stax_pro/1000) 
         self.stay_pro = int(stay_pro/1000)
 
-        #realizar el fmm
+        # Carry out the fast marching
         self.tp = fmm.eikonal(self.vpp, xyz=np.array([self.stay_pro,self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
         self.ts = fmm.eikonal(self.vss, xyz=np.array([self.stay_pro, self.stax_pro,0]),ax=[0,1,self.nx],ay=[0,1,self.ny],az=[0,1,self.nz],order=2);
 
