@@ -14,5 +14,9 @@ venv/
 
 # Archivos de Sphinx
 docs/_build/
+<<<<<<< HEAD
 
 #Archvios de documentacion
+=======
+docs/build/
+>>>>>>> a6fb559a7751c0cc571cb1c11a8b025dff741774
