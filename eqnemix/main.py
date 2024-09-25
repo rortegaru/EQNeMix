@@ -368,6 +368,9 @@ class eqnefmm:
 class eqnemaster:
     def __init__(self,station_lon, station_lat, EPSG=4326 ,deltadist=1000):
         """
+        This class is the base class for eqne since it contains all the necesary methods to do a
+        eqnemix process.
+
         :param station_lon: Longitud of the station to work with
         :param station_lat: Latitud of the station to work with
         :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
@@ -381,7 +384,11 @@ class eqnemaster:
 
     def xminyminshape(self,file,inputcrs=4326,outputcrs=3857):
         """
-        :param fileextent: Geographical Extension file, like 'extent.shp'        
+        This method receives a shape file around the area of the desired station 
+        and returns the values of the minimun lat and lon in the output EPSG (default to 3857)
+        as well as the length of the maximum length assuming a square.
+
+        :param file: Geographical Extension file, like 'extent.shp'        
         :param inputsrc: Input source, default is 4326
         :param outputcrs: Output coordinate reference system, default is 3857
         """
@@ -422,6 +429,18 @@ class eqnemaster:
         return self.minx, self.miny, self.max_elements
     
     def xminymin(self,xmin,ymin,xmax,ymax,inputcrs=4326,outputcrs=3857):
+        """
+        This method receives the minimun and maximum latitud and longitud that define an area around the desired station
+        and returns the values of the minimun lat and lon in the output EPSG (default to 3857)
+        as well as the length of the maximum length assuming a square.
+
+        :param xmin: minimum longitud 
+        :param ymin: minimum latitud
+        :param xmax: maximum longitud
+        :param ymax: maximum latitud        
+        :param inputsrc: Input source, default is 4326
+        :param outputcrs: Output coordinate reference system, default is 3857
+        """
         self.inputcrsshape = inputcrs
         self.outputcrsshape = outputcrs
         # Define the input coordinates system (latitude and longitude)
@@ -454,6 +473,15 @@ class eqnemaster:
     
 
     def nllgrid(self,vp_values,vs_values,layer_thickness):
+        """
+        Constructor to initialize the EQNEGRID class. Returns a grid with P velocities and a grid with S velocities.
+        The crs is the same as the one indicated in xminymin or xminyminshape.
+        
+        :param vp_values: 1D array that contains the P velocities of each layer
+        :param vs_values: 1D array that contains the S velocities of each layer
+        :param layer_thickness: 1D array that contains the width of each layer
+        :param kwargs: Additional optional parameters.
+        """
         if len(layer_thickness) != len(vp_values):
             raise ValueError("The size of layer_thickness must be the same as the size of vp_values")
         if len(layer_thickness) != len(vs_values):
@@ -465,7 +493,7 @@ class eqnemaster:
             dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
             x_orig=0, y_orig=0, z_orig=0
         )
-        gridp.init_array() I#nicialize the tridimentional array with zeros
+        gridp.init_array() #Inicialize the tridimentional array with zeros
        
         z_start = 0
         # Assign the velocities to the corresponding position in the array
@@ -499,7 +527,13 @@ class eqnemaster:
         return gridp, grids
     
     def eqnefmm(self):
+        """
+        Constructor to initialize the eqnefmm, uses xminymin or xminyminshape and nllgrid results to return a grid containing the 
+        differences in seconds between the P and S wave arrival taking the station of interest as origin.
 
+
+
+        """
         #reshape arrays
 
         self.vpp = self.gridp.reshape([255*255*255,1], order='F').astype('float32')

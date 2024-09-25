@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 setup(
     name='eqnemix',
     version='2.0.1',
