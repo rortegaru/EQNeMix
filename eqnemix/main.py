@@ -16,20 +16,20 @@ import pyproj
 
 
 class eqnegrid:
-   def __init__(self, fileextent='extent.shp', inputsrc=4326, outputcrs=3587, 
-                  filesp='Vsp.npy',files='vs.npy', filep='vp.npy', deltadist=1000, **kwargs):
-        """
-        Constructor to initialize the EQNEGRID class.
+   """
+    Constructor to initialize the EQNEGRID class.
 
-        :param fileextent: Geographical Extension file, default is 'extent.shp'
-        :param inputsrc: Input source, default is 4326
-        :param outputcrs: Output coordinate reference system, default is 3587
-        :param filesp: Numpy file, default is 'Vsp.npy'
-        :param filep: P file, default is ''vp.npy'
-        :param files: S file, default is 'vs.npy'
-        :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
-        :param kwargs: Additional optional parameters.
-        """
+    :param fileextent: Geographical Extension file, default is 'extent.shp'
+    :param inputsrc: Input source, default is 4326
+    :param outputcrs: Output coordinate reference system, default is 3587
+    :param filesp: Numpy file, default is 'Vsp.npy'
+    :param filep: P file, default is ''vp.npy'
+    :param files: S file, default is 'vs.npy'
+    :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
+    :param kwargs: Additional optional parameters.
+   """
+   def __init__(self, fileextent='extent.shp', inputsrc=4326, outputcrs=3587, 
+                filesp='Vsp.npy',files='vs.npy', filep='vp.npy', deltadist=1000, **kwargs):
         self.fileextent = fileextent
         self.inputsrc = inputsrc
         self.outputcrs = outputcrs
@@ -137,17 +137,19 @@ class eqnegrid:
  
 
 class eqnefmm:
+    """
+    Constructor to initialize the eqnefmm
+
+    :param eqnegrid: Instance of grid previously created
+    velp numpy array with P velocities
+    vels numpy array with S velocities
+    stax longitud of station, expected in EPSG:4326
+    stay latitud of station, expected in EPSG:4326
+
+    """
+
     def __init__(self,  stax, stay, velp='vp.npy',vels='vs.npy',fileextent='extent.shp', inputsrc=4326, outputcrs=3587,deltadist=1000):
-        """
-        Constructor to initialize the eqnefmm
-
-        :param eqnegrid: Instance of grid previously created
-        velp numpy array with P velocities
-        vels numpy array with S velocities
-        stax longitud of station, expected in EPSG:4326
-        stay latitud of station, expected in EPSG:4326
-
-        """
+        
         self.deltadist = deltadist
         
         #Dimensiones del poligono
@@ -366,15 +368,17 @@ class eqnefmm:
 
 
 class eqnemaster:
-    def __init__(self,station_lon, station_lat, EPSG=4326 ,deltadist=1000):
-        """
-        This class is the base class for eqne since it contains all the necesary methods to do a
-        eqnemix process.
+    """
+    This class is the base class for eqne since it contains all the necesary methods to do a
+    eqnemix process.
 
-        :param station_lon: Longitud of the station to work with
-        :param station_lat: Latitud of the station to work with
-        :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
-        """
+    :param station_lon: Longitud of the station to work with
+    :param station_lat: Latitud of the station to work with
+    :param deltadist: Number of cells in the grid, is the value in meters, default is 1000
+    """
+    
+    def __init__(self,station_lon, station_lat, EPSG=4326 ,deltadist=1000):
+        
         self.stalon = station_lon
         self.stalat = station_lat
         self.stacrs = EPSG
