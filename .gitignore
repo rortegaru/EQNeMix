@@ -14,3 +14,4 @@ venv/
 
 # Archivos de Sphinx
 docs/_build/
+docs/build/

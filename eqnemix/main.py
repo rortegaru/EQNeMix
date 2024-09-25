@@ -465,7 +465,7 @@ class eqnemaster:
             dx=self.deltadist, dy=self.deltadist, dz=self.deltadist,
             x_orig=0, y_orig=0, z_orig=0
         )
-        gridp.init_array() I#nicialize the tridimentional array with zeros
+        gridp.init_array() #Inicialize the tridimentional array with zeros
        
         z_start = 0
         # Assign the velocities to the corresponding position in the array
